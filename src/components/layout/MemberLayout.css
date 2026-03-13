@@ -1,0 +1,125 @@
+.member-layout {
+  min-height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Header */
+.member-header {
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.member-header-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+  color: #fff;
+}
+
+.member-logo-icon {
+  width: 28px;
+  height: 28px;
+  background: rgba(255,255,255,0.2);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+
+.member-header-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.member-header-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+}
+
+.member-header .btn-icon {
+  color: rgba(255,255,255,0.8);
+}
+
+.member-header .btn-icon:hover {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* Content */
+.member-content {
+  flex: 1;
+  padding: var(--space-4);
+  padding-bottom: calc(72px + var(--space-4));
+  overflow-y: auto;
+}
+
+/* Bottom nav */
+.member-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  height: 72px;
+  z-index: 50;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.06);
+}
+
+.member-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  padding: var(--space-2);
+  border-top: 2px solid transparent;
+  margin-top: -1px;
+}
+
+.member-nav-item:hover {
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.member-nav-item.active {
+  color: var(--color-primary);
+  border-top-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+@media (min-width: 480px) {
+  .member-layout {
+    box-shadow: var(--shadow-xl);
+  }
+}

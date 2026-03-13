@@ -1,0 +1,94 @@
+.member-dashboard { display: flex; flex-direction: column; gap: var(--space-4); }
+
+/* Welcome */
+.member-welcome {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.member-welcome-text h2 {
+  font-family: var(--font-display); font-size: 1.75rem; color: var(--color-text);
+}
+.member-welcome-text p { font-size: 0.875rem; color: var(--color-text-muted); }
+.member-socio-badge {
+  display: flex; flex-direction: column; align-items: flex-end;
+  background: var(--color-primary-light); color: var(--color-primary);
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);
+  font-size: 0.875rem;
+}
+
+/* Membership card */
+.member-membership-card {
+  border-radius: var(--radius-lg); padding: var(--space-4);
+  display: flex; align-items: center; gap: var(--space-3);
+  border: 1px solid; transition: all var(--transition-base);
+}
+.member-membership-card.active {
+  background: var(--color-success-light); border-color: #bbf7d0; color: var(--color-success);
+}
+.member-membership-card.expiring {
+  background: var(--color-warning-light); border-color: #fcd34d; color: var(--color-warning);
+}
+.member-membership-card.expired {
+  background: var(--color-danger-light); border-color: #fecaca; color: var(--color-danger);
+}
+.member-card-icon { flex-shrink: 0; }
+.member-card-info { flex: 1; }
+.member-card-plan { font-weight: 600; font-size: 1rem; }
+.member-card-status { font-size: 0.875rem; margin-top: 2px; }
+.member-card-classes { font-size: 0.8125rem; margin-top: 4px; opacity: 0.9; }
+
+/* Stats row */
+.member-stats-row {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  background: var(--color-surface); border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border); overflow: hidden;
+}
+.member-stat {
+  padding: var(--space-4) var(--space-3); text-align: center;
+  border-right: 1px solid var(--color-border);
+}
+.member-stat:last-child { border-right: none; }
+.member-stat-value {
+  font-family: var(--font-display); font-size: 1.75rem; color: var(--color-primary); line-height: 1;
+}
+.member-stat-label { font-size: 0.6875rem; color: var(--color-text-muted); margin-top: 4px; font-weight: 500; }
+
+/* Sections */
+.member-section { display: flex; flex-direction: column; gap: var(--space-3); }
+.member-section-title {
+  font-family: var(--font-body); font-size: 0.9375rem; font-weight: 700;
+  color: var(--color-text-secondary); display: flex; align-items: center; gap: var(--space-2);
+}
+
+/* Notifications */
+.member-notifications { display: flex; flex-direction: column; gap: var(--space-2); }
+.member-notification {
+  display: flex; align-items: flex-start; gap: var(--space-3);
+  background: var(--color-surface); border-radius: var(--radius-md);
+  padding: var(--space-3); border: 1px solid var(--color-border);
+}
+
+/* Classes */
+.member-classes-list { display: flex; flex-direction: column; gap: var(--space-2); }
+.member-class-item {
+  display: flex; align-items: flex-start; gap: var(--space-3);
+  background: var(--color-surface); border-radius: var(--radius-md);
+  padding: var(--space-3); border: 1px solid var(--color-border);
+}
+
+/* Quick actions */
+.member-quick-actions {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3);
+}
+.member-quick-action {
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-2);
+  background: var(--color-surface); border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-3); border: 1px solid var(--color-border);
+  text-decoration: none; color: var(--color-text-secondary);
+  font-size: 0.8125rem; font-weight: 500; text-align: center;
+  transition: all var(--transition-fast);
+}
+.member-quick-action:hover { border-color: var(--color-primary); box-shadow: var(--shadow-md); }
+.member-qa-icon {
+  width: 52px; height: 52px; border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+}

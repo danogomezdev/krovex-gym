@@ -1,0 +1,8 @@
+.reports-page {}
+.reports-charts-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4);
+}
+@media (max-width: 1024px) {
+  .reports-charts-row { grid-template-columns: 1fr; }
+  .reports-charts-row .card[style*="span 2"] { grid-column: span 1; }
+}

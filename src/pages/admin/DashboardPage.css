@@ -1,0 +1,96 @@
+.dashboard-page {}
+
+.dashboard-actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.dashboard-charts {
+  margin: var(--space-4) 0;
+}
+
+.dashboard-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+/* Expiring list */
+.expiring-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.expiring-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--color-text);
+  transition: background var(--transition-fast);
+}
+
+.expiring-item:hover { background: var(--color-bg); }
+
+.expiring-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.expiring-info { flex: 1; }
+.expiring-name { font-size: 0.9rem; font-weight: 500; }
+.expiring-date { font-size: 0.8rem; color: var(--color-text-muted); }
+
+/* Payments list */
+.payments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.payment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.payment-item:hover { background: var(--color-bg); }
+.payment-member { font-size: 0.9rem; font-weight: 500; }
+.payment-amount { font-family: var(--font-mono); font-weight: 600; color: var(--color-success); text-align: right; }
+
+/* Attendance today */
+.attendance-today-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.attendance-today-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .dashboard-bottom { grid-template-columns: 1fr; }
+  .dashboard-actions { flex-direction: column; }
+}
