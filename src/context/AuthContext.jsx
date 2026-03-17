@@ -52,23 +52,16 @@ export function AuthProvider({ children }) {
         .single()
 
       if (error || !data) {
-        // If no staff profile, create a default one for demo
-        const { data: userData } = await supabase.auth.getUser()
-        if (userData?.user) {
-          setStaffUser({
-            id: 'demo',
-            nombre: 'Admin',
-            apellido: 'Demo',
-            email: userData.user.email,
-            rol: 'super_admin',
-            auth_id: authId
-          })
-        }
+        // Sin perfil en staff_users — cerrar sesión y redirigir al login
+        console.warn('Usuario sin perfil de staff, cerrando sesión')
+        await supabase.auth.signOut()
+        setStaffUser(null)
       } else {
         setStaffUser(data)
       }
     } catch (err) {
       console.error('Error loading staff profile:', err)
+      setStaffUser(null)
     } finally {
       setLoading(false)
     }
