@@ -26,27 +26,29 @@ export default function MemberDetailPage() {
   const [attendance, setAttendance] = useState([])
   const [measurements, setMeasurements] = useState([])
   const [memberRoutine, setMemberRoutine] = useState(null)
+  const [planes, setPlanes] = useState([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('resumen')
   const [qrUrl, setQrUrl] = useState(null)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [paymentForm, setPaymentForm] = useState({ monto: '', metodo: 'efectivo', concepto: '' })
+  const [paymentForm, setPaymentForm] = useState({
+    monto: '', metodo: 'efectivo', concepto: '', plan_id: '', fecha_vencimiento: ''
+  })
   const [savingPayment, setSavingPayment] = useState(false)
 
   useEffect(() => { loadMember() }, [id])
-  useEffect(() => {
-    if (member) generateQR()
-  }, [member])
+  useEffect(() => { if (member) generateQR() }, [member])
 
   const loadMember = async () => {
     setLoading(true)
     try {
-      const [memberRes, paymentsRes, attendanceRes, measurementsRes, routineRes] = await Promise.all([
+      const [memberRes, paymentsRes, attendanceRes, measurementsRes, routineRes, planesRes] = await Promise.all([
         supabase.from('members').select('*').eq('id', id).single(),
         supabase.from('payments').select('*, membership_plans(nombre)').eq('member_id', id).order('created_at', { ascending: false }).limit(20),
         supabase.from('attendance').select('*').eq('member_id', id).order('created_at', { ascending: false }).limit(30),
         supabase.from('measurements').select('*').eq('member_id', id).order('fecha', { ascending: false }),
-        supabase.from('member_routines').select('*, routines(*, routine_days(*, routine_exercises(*, exercises(*))))').eq('member_id', id).eq('activa', true).single()
+        supabase.from('member_routines').select('*, routines(*, routine_days(*, routine_exercises(*, exercises(*))))').eq('member_id', id).eq('activa', true).maybeSingle(),
+        supabase.from('membership_plans').select('*').eq('activo', true).order('nombre'),
       ])
 
       if (memberRes.error) throw memberRes.error
@@ -55,8 +57,8 @@ export default function MemberDetailPage() {
       setAttendance(attendanceRes.data || [])
       setMeasurements(measurementsRes.data || [])
       setMemberRoutine(routineRes.data || null)
+      setPlanes(planesRes.data || [])
 
-      // Load active membership
       const { data: memberships } = await supabase
         .from('memberships')
         .select('*, membership_plans(*)')
@@ -98,19 +100,37 @@ export default function MemberDetailPage() {
   const handleAddPayment = async (e) => {
     e.preventDefault()
     setSavingPayment(true)
-    const { error } = await supabase.from('payments').insert({
-      member_id: id,
-      monto: parseFloat(paymentForm.monto),
-      metodo: paymentForm.metodo,
-      concepto: paymentForm.concepto,
-      estado: 'pagado'
-    })
-    setSavingPayment(false)
-    if (error) { toast.error('Error al registrar pago'); return }
-    toast.success('Pago registrado')
-    setShowPaymentModal(false)
-    setPaymentForm({ monto: '', metodo: 'efectivo', concepto: '' })
-    loadMember()
+    try {
+      await supabase.from('payments').insert({
+        member_id: id,
+        monto: parseFloat(paymentForm.monto),
+        metodo: paymentForm.metodo,
+        concepto: paymentForm.concepto,
+        estado: 'pagado',
+        plan_id: paymentForm.plan_id || null,
+      })
+
+      if (paymentForm.plan_id && paymentForm.fecha_vencimiento) {
+        const plan = planes.find(p => p.id === paymentForm.plan_id)
+        await supabase.from('memberships').insert({
+          member_id: id,
+          plan_id: paymentForm.plan_id,
+          estado: 'activo',
+          fecha_inicio: new Date().toISOString().split('T')[0],
+          fecha_vencimiento: paymentForm.fecha_vencimiento,
+          clases_restantes: plan?.clases_incluidas || null,
+        })
+      }
+
+      toast.success('Pago registrado')
+      setShowPaymentModal(false)
+      setPaymentForm({ monto: '', metodo: 'efectivo', concepto: '', plan_id: '', fecha_vencimiento: '' })
+      loadMember()
+    } catch {
+      toast.error('Error al registrar pago')
+    } finally {
+      setSavingPayment(false)
+    }
   }
 
   const daysLeft = membership ? daysUntil(membership.fecha_vencimiento) : null
@@ -162,7 +182,6 @@ export default function MemberDetailPage() {
             </div>
           </div>
         </div>
-
         <div className="member-profile-right">
           {qrUrl && <img src={qrUrl} alt="QR" className="member-qr" />}
         </div>
@@ -234,11 +253,7 @@ export default function MemberDetailPage() {
       {/* Tabs */}
       <div className="detail-tabs">
         {TABS.map(t => (
-          <button
-            key={t}
-            className={`detail-tab ${tab === t ? 'active' : ''}`}
-            onClick={() => setTab(t)}
-          >
+          <button key={t} className={`detail-tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>
             {t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
@@ -246,7 +261,6 @@ export default function MemberDetailPage() {
 
       {/* Tab content */}
       <div className="detail-tab-content">
-        {/* RESUMEN */}
         {tab === 'resumen' && (
           <div className="grid-2 gap-4">
             <div className="card">
@@ -270,7 +284,6 @@ export default function MemberDetailPage() {
                 </div>
               </div>
             </div>
-
             <div className="card">
               <h4 style={{ marginBottom: 'var(--space-3)' }}>Datos personales</h4>
               <div className="detail-fields">
@@ -289,7 +302,6 @@ export default function MemberDetailPage() {
           </div>
         )}
 
-        {/* PAGOS */}
         {tab === 'pagos' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-3)' }}>
@@ -322,7 +334,6 @@ export default function MemberDetailPage() {
           </div>
         )}
 
-        {/* ASISTENCIAS */}
         {tab === 'asistencias' && (
           <div>
             <p className="text-muted text-sm" style={{ marginBottom: 'var(--space-3)' }}>
@@ -346,7 +357,6 @@ export default function MemberDetailPage() {
           </div>
         )}
 
-        {/* RUTINA */}
         {tab === 'rutina' && (
           <div>
             {!memberRoutine ? (
@@ -383,7 +393,6 @@ export default function MemberDetailPage() {
           </div>
         )}
 
-        {/* MEDIDAS */}
         {tab === 'medidas' && (
           <div>
             {measurements.length === 0 ? (
@@ -415,10 +424,7 @@ export default function MemberDetailPage() {
           </div>
         )}
 
-        {/* NOTAS */}
-        {tab === 'notas' && (
-          <NoteTab member={member} onUpdate={loadMember} />
-        )}
+        {tab === 'notas' && <NoteTab member={member} onUpdate={loadMember} />}
       </div>
 
       {/* Payment modal */}
@@ -431,13 +437,33 @@ export default function MemberDetailPage() {
             </div>
             <form onSubmit={handleAddPayment} className="flex flex-col gap-4">
               <div className="form-group">
+                <label className="form-label">Plan (opcional)</label>
+                <select className="form-select" value={paymentForm.plan_id}
+                  onChange={e => setPaymentForm(p => ({ ...p, plan_id: e.target.value }))}>
+                  <option value="">Sin plan</option>
+                  {planes.map(p => (
+                    <option key={p.id} value={p.id}>{p.nombre} — {formatCurrency(p.precio)}</option>
+                  ))}
+                </select>
+              </div>
+              {paymentForm.plan_id && (
+                <div className="form-group">
+                  <label className="form-label">Fecha de vencimiento</label>
+                  <input type="date" className="form-input" value={paymentForm.fecha_vencimiento}
+                    onChange={e => setPaymentForm(p => ({ ...p, fecha_vencimiento: e.target.value }))} required />
+                </div>
+              )}
+              <div className="form-group">
                 <label className="form-label">Monto</label>
-                <input type="number" className="form-input font-mono" placeholder="15000" value={paymentForm.monto}
-                  onChange={e => setPaymentForm(p => ({ ...p, monto: e.target.value }))} required min="1" />
+                <input type="number" className="form-input font-mono" placeholder="15000"
+                  value={paymentForm.monto}
+                  onChange={e => setPaymentForm(p => ({ ...p, monto: e.target.value }))}
+                  required min="1" />
               </div>
               <div className="form-group">
                 <label className="form-label">Método de pago</label>
-                <select className="form-select" value={paymentForm.metodo} onChange={e => setPaymentForm(p => ({ ...p, metodo: e.target.value }))}>
+                <select className="form-select" value={paymentForm.metodo}
+                  onChange={e => setPaymentForm(p => ({ ...p, metodo: e.target.value }))}>
                   <option value="efectivo">Efectivo</option>
                   <option value="transferencia">Transferencia</option>
                   <option value="tarjeta">Tarjeta</option>
@@ -447,11 +473,13 @@ export default function MemberDetailPage() {
               </div>
               <div className="form-group">
                 <label className="form-label">Concepto</label>
-                <input type="text" className="form-input" placeholder="Mensual Musculación" value={paymentForm.concepto}
+                <input type="text" className="form-input" placeholder="Mensual Musculación"
+                  value={paymentForm.concepto}
                   onChange={e => setPaymentForm(p => ({ ...p, concepto: e.target.value }))} />
               </div>
               <div className="flex gap-3">
-                <button type="button" className="btn btn-secondary w-full" onClick={() => setShowPaymentModal(false)}>Cancelar</button>
+                <button type="button" className="btn btn-secondary w-full"
+                  onClick={() => setShowPaymentModal(false)}>Cancelar</button>
                 <button type="submit" className="btn btn-primary w-full" disabled={savingPayment}>
                   {savingPayment ? 'Guardando...' : 'Registrar pago'}
                 </button>
@@ -487,7 +515,6 @@ export default function MemberDetailPage() {
         .detail-tabs { display: flex; gap: 2px; background: var(--color-bg); border-radius: var(--radius-md); padding: 4px; margin-bottom: var(--space-4); }
         .detail-tab { flex: 1; padding: var(--space-2) var(--space-3); background: none; border: none; font-family: var(--font-body); font-size: 0.8125rem; font-weight: 500; color: var(--color-text-muted); cursor: pointer; border-radius: var(--radius-sm); transition: all var(--transition-fast); white-space: nowrap; }
         .detail-tab.active { background: var(--color-surface); color: var(--color-primary); font-weight: 600; box-shadow: var(--shadow-sm); }
-        .detail-tab-content {}
         .detail-stats { display: flex; flex-direction: column; gap: var(--space-4); }
         .detail-stat { display: flex; align-items: center; gap: var(--space-3); }
         .detail-fields { display: flex; flex-direction: column; gap: var(--space-1); }
@@ -522,13 +549,8 @@ function NoteTab({ member, onUpdate }) {
     <div>
       <div className="form-group">
         <label className="form-label">Notas internas del staff</label>
-        <textarea
-          className="form-textarea"
-          value={notes}
-          onChange={e => setNotes(e.target.value)}
-          rows={8}
-          placeholder="Notas sobre el miembro (solo visible para el staff)..."
-        />
+        <textarea className="form-textarea" value={notes} onChange={e => setNotes(e.target.value)}
+          rows={8} placeholder="Notas sobre el miembro (solo visible para el staff)..." />
       </div>
       <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
         {saving ? 'Guardando...' : 'Guardar notas'}
