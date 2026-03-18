@@ -112,12 +112,12 @@ export default function RoutinesPage() {
 
   const handleAssign = async () => {
     if (!assignMemberId || !selectedRoutine) return
-    const { error } = await supabase.from('member_routines').upsert({
+    const { error } = await supabase.from('member_routines').insert({
       member_id: assignMemberId,
       routine_id: selectedRoutine.id,
       activa: true,
       fecha_inicio: new Date().toISOString().split('T')[0]
-    }, { onConflict: 'member_id' })
+    })
     if (error) { toast.error('Error al asignar rutina'); return }
     toast.success('Rutina asignada correctamente')
     setShowAssignModal(false)
