@@ -5,24 +5,21 @@ import toast from 'react-hot-toast'
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)       // Supabase auth user (admin/entrenador)
-  const [staffUser, setStaffUser] = useState(null)  // Staff profile from DB
-  const [member, setMember] = useState(null)   // Member logged via DNI+PIN
+  const [user, setUser] = useState(null)
+  const [staffUser, setStaffUser] = useState(null)
+  const [member, setMember] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check Supabase auth session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user)
         loadStaffProfile(session.user.id)
       } else {
-        // Check for member session in localStorage
         const savedMember = localStorage.getItem('krovex_member')
         if (savedMember) {
-          try {
-            setMember(JSON.parse(savedMember))
-          } catch { localStorage.removeItem('krovex_member') }
+          try { setMember(JSON.parse(savedMember)) }
+          catch { localStorage.removeItem('krovex_member') }
         }
         setLoading(false)
       }
@@ -52,9 +49,8 @@ export function AuthProvider({ children }) {
         .single()
 
       if (error || !data) {
-        // Sin perfil en staff_users — cerrar sesión y redirigir al login
-        console.warn('Usuario sin perfil de staff, cerrando sesión')
-        await supabase.auth.signOut()
+        // Sin perfil — no cerrar sesión, continuar sin perfil
+        console.warn('Sin perfil de staff, continuando sin perfil')
         setStaffUser(null)
       } else {
         setStaffUser(data)
@@ -67,12 +63,10 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // Admin/Trainer login via Supabase Auth
   const signIn = async (email, password) => {
     setLoading(true)
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
-
     if (error) {
       if (error.message.includes('Invalid login')) {
         toast.error('Email o contraseña incorrectos')
@@ -81,38 +75,18 @@ export function AuthProvider({ children }) {
       }
       return { success: false, error }
     }
-
     toast.success('¡Bienvenido!')
     return { success: true, data }
   }
 
-  // Member login via DNI + PIN (custom RPC)
   const memberSignIn = async (dni, pin) => {
     setLoading(true)
     try {
-      const { data, error } = await supabase.rpc('member_login', {
-        p_dni: dni,
-        p_pin: pin
-      })
-
+      const { data, error } = await supabase.rpc('member_login', { p_dni: dni, p_pin: pin })
       setLoading(false)
-
-      if (error) {
-        toast.error('Error de conexión')
-        return { success: false }
-      }
-
-      if (!data?.success) {
-        toast.error(data?.error || 'DNI o PIN incorrectos')
-        return { success: false }
-      }
-
-      const memberData = {
-        ...data.member,
-        membership: data.membership,
-        plan: data.plan
-      }
-
+      if (error) { toast.error('Error de conexión'); return { success: false } }
+      if (!data?.success) { toast.error(data?.error || 'DNI o PIN incorrectos'); return { success: false } }
+      const memberData = { ...data.member, membership: data.membership, plan: data.plan }
       setMember(memberData)
       localStorage.setItem('krovex_member', JSON.stringify(memberData))
       toast.success(`¡Hola, ${data.member.nombre}!`)
@@ -131,7 +105,6 @@ export function AuthProvider({ children }) {
       toast.success('Sesión cerrada')
       return
     }
-
     await supabase.auth.signOut()
     setUser(null)
     setStaffUser(null)
