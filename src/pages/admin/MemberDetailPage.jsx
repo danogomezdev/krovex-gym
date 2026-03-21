@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import QRCode from 'qrcode'
 import toast from 'react-hot-toast'
+import MemberRoutineTab from './MemberRoutineTab'
 import './MemberDetailPage.css'
 
 const TABS = ['resumen', 'pagos', 'asistencias', 'rutina', 'medidas', 'notas']
@@ -358,39 +359,10 @@ export default function MemberDetailPage() {
         )}
 
         {tab === 'rutina' && (
-          <div>
-            {!memberRoutine ? (
-              <div className="empty-state">
-                <div className="empty-state-icon"><Dumbbell size={28} /></div>
-                <h3>Sin rutina asignada</h3>
-                <p>Asigná una rutina al miembro desde la sección de Rutinas</p>
-              </div>
-            ) : (
-              <div>
-                <div className="card" style={{ marginBottom: 'var(--space-4)' }}>
-                  <div className="card-header">
-                    <h3 className="card-title">{memberRoutine.routines?.nombre}</h3>
-                    <span className="badge badge-primary">{memberRoutine.routines?.nivel}</span>
-                  </div>
-                  <p className="text-muted text-sm">{memberRoutine.routines?.descripcion}</p>
-                </div>
-                {memberRoutine.routines?.routine_days?.sort((a, b) => a.orden - b.orden).map(day => (
-                  <div key={day.id} className="card" style={{ marginBottom: 'var(--space-3)' }}>
-                    <h4 style={{ marginBottom: 'var(--space-3)' }}>{day.nombre}</h4>
-                    {day.routine_exercises?.sort((a, b) => a.orden - b.orden).map(ex => (
-                      <div key={ex.id} className="exercise-item">
-                        <div className="exercise-name">{ex.exercises?.nombre}</div>
-                        <div className="exercise-detail">
-                          {ex.series} series × {ex.repeticiones} reps
-                          {ex.peso && ` — ${ex.peso}`}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <MemberRoutineTab
+            memberId={member.id}
+            memberName={`${member.nombre} ${member.apellido}`}
+          />
         )}
 
         {tab === 'medidas' && (
