@@ -408,7 +408,7 @@ function CreateRoutine({ memberId, onDone, onCancel }) {
   })
   const [days, setDays] = useState([{
     nombre: 'Día 1',
-    ejercicios: [{ exercise_id: '', series: 3, repeticiones: '10-12', peso: '', descanso_segundos: 60, notas: '' }]
+    ejercicios: [{ exercise_id: '', tipo: 'reps', series: 3, repeticiones: '10-12', segundos: 30, peso: '', descanso_segundos: 60, notas: '' }]
   }])
   const [saving, setSaving] = useState(false)
 
@@ -422,7 +422,7 @@ function CreateRoutine({ memberId, onDone, onCancel }) {
   const removeDay = i => setDays(d => d.filter((_, idx) => idx !== i))
   const setDayName = (i, v) => setDays(d => d.map((day, idx) => idx === i ? { ...day, nombre: v } : day))
   const addEx = di => setDays(d => d.map((day, i) => i === di
-    ? { ...day, ejercicios: [...day.ejercicios, { exercise_id: '', series: 3, repeticiones: '10-12', peso: '', descanso_segundos: 60, notas: '' }] }
+    ? { ...day, ejercicios: [...day.ejercicios, { exercise_id: '', tipo: 'reps', series: 3, repeticiones: '10-12', segundos: 30, peso: '', descanso_segundos: 60, notas: '' }] }
     : day))
   const removeEx = (di, ei) => setDays(d => d.map((day, i) => i === di
     ? { ...day, ejercicios: day.ejercicios.filter((_, j) => j !== ei) }
@@ -458,9 +458,12 @@ function CreateRoutine({ memberId, onDone, onCancel }) {
           if (!ex.exercise_id) continue
           await supabase.from('routine_exercises').insert({
             routine_day_id: newDay.id, exercise_id: ex.exercise_id,
-            series: parseInt(ex.series) || 3, repeticiones: ex.repeticiones,
+            series: parseInt(ex.series) || 3,
+            repeticiones: ex.tipo === 'segundos' ? `${ex.segundos}s` : ex.repeticiones,
             peso: ex.peso || null, descanso_segundos: parseInt(ex.descanso_segundos) || 60,
-            notas: ex.notas || null, orden: ei
+            notas: ex.notas || null, orden: ei,
+            tipo: ex.tipo || 'reps',
+            segundos: ex.tipo === 'segundos' ? (parseInt(ex.segundos) || 30) : null,
           })
         }
       }
@@ -569,16 +572,27 @@ function CreateRoutine({ memberId, onDone, onCancel }) {
             </div>
 
             {day.ejercicios.map((ex, ei) => (
-              <div key={ei} style={{ display: 'grid', gridTemplateColumns: '2fr 60px 80px 80px 70px auto', gap: 6, marginBottom: 8, alignItems: 'center' }}>
-                <select className="form-select" value={ex.exercise_id} onChange={e => setExF(di, ei, 'exercise_id', e.target.value)}>
-                  <option value="">Ejercicio...</option>
-                  {exercises.map(e => <option key={e.id} value={e.id}>{e.nombre} ({muscleGroupLabel[e.grupo_muscular] || e.grupo_muscular})</option>)}
-                </select>
-                <input type="number" className="form-input" placeholder="Series" value={ex.series} onChange={e => setExF(di, ei, 'series', e.target.value)} min={1} />
-                <input type="text" className="form-input" placeholder="Reps" value={ex.repeticiones} onChange={e => setExF(di, ei, 'repeticiones', e.target.value)} />
-                <input type="text" className="form-input" placeholder="Peso" value={ex.peso} onChange={e => setExF(di, ei, 'peso', e.target.value)} />
-                <input type="number" className="form-input" placeholder="Desc(s)" value={ex.descanso_segundos} onChange={e => setExF(di, ei, 'descanso_segundos', e.target.value)} />
-                <button type="button" className="btn-icon" style={{ color: 'var(--color-danger)' }} onClick={() => removeEx(di, ei)}><Trash2 size={14} /></button>
+              <div key={ei} style={{ marginBottom: 10, padding: '10px 12px', background: 'var(--color-bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                  <select className="form-select" value={ex.exercise_id} onChange={e => setExF(di, ei, 'exercise_id', e.target.value)}>
+                    <option value="">Ejercicio...</option>
+                    {exercises.map(e => <option key={e.id} value={e.id}>{e.nombre} ({muscleGroupLabel[e.grupo_muscular] || e.grupo_muscular})</option>)}
+                  </select>
+                  <button type="button" className="btn-icon" style={{ color: 'var(--color-danger)' }} onClick={() => removeEx(di, ei)}><Trash2 size={15} /></button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '110px 60px 90px 90px 80px', gap: 6, alignItems: 'center' }}>
+                  <select className="form-select" value={ex.tipo || 'reps'} onChange={e => setExF(di, ei, 'tipo', e.target.value)} style={{ fontSize: '0.8125rem' }}>
+                    <option value="reps">Por repeticiones</option>
+                    <option value="segundos">Por segundos</option>
+                  </select>
+                  <input type="number" className="form-input" placeholder="Series" value={ex.series} onChange={e => setExF(di, ei, 'series', e.target.value)} min={1} />
+                  {ex.tipo === 'segundos'
+                    ? <input type="number" className="form-input" placeholder="Seg." value={ex.segundos} onChange={e => setExF(di, ei, 'segundos', e.target.value)} min={1} />
+                    : <input type="text" className="form-input" placeholder="Reps" value={ex.repeticiones} onChange={e => setExF(di, ei, 'repeticiones', e.target.value)} />
+                  }
+                  <input type="text" className="form-input" placeholder="Peso (kg)" value={ex.peso} onChange={e => setExF(di, ei, 'peso', e.target.value)} />
+                  <input type="number" className="form-input" placeholder="Desc(s)" value={ex.descanso_segundos} onChange={e => setExF(di, ei, 'descanso_segundos', e.target.value)} />
+                </div>
               </div>
             ))}
             <button type="button" className="btn btn-sm btn-ghost" onClick={() => addEx(di)}><Plus size={14} /> Ejercicio</button>
@@ -608,14 +622,16 @@ function RoutineView({ memberRoutine, onDesasignar, onReemplazar, onRefresh }) {
 
   function startEdit(ex) {
     setEditingEx(ex.id)
-    setEditVals({ series: ex.series, repeticiones: ex.repeticiones, peso: ex.peso || '', descanso_segundos: ex.descanso_segundos, notas: ex.notas || '' })
+    setEditVals({ tipo: ex.tipo || 'reps', series: ex.series, repeticiones: ex.repeticiones, segundos: ex.segundos || 30, peso: ex.peso || '', descanso_segundos: ex.descanso_segundos, notas: ex.notas || '' })
   }
 
   async function saveEdit(exId) {
     setSaving(true)
     const { error } = await supabase.from('routine_exercises').update({
+      tipo: editVals.tipo || 'reps',
       series: parseInt(editVals.series) || 3,
-      repeticiones: editVals.repeticiones,
+      repeticiones: editVals.tipo === 'segundos' ? `${editVals.segundos}s` : editVals.repeticiones,
+      segundos: editVals.tipo === 'segundos' ? (parseInt(editVals.segundos) || 30) : null,
       peso: editVals.peso || null,
       descanso_segundos: parseInt(editVals.descanso_segundos) || 60,
       notas: editVals.notas || null,
@@ -684,14 +700,26 @@ function RoutineView({ memberRoutine, onDesasignar, onReemplazar, onRefresh }) {
                     // ── Modo edición inline ──
                     <div>
                       <div style={{ fontWeight: 600, marginBottom: 10 }}>{ex.exercises?.nombre}</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '60px 90px 90px 80px', gap: 8, marginBottom: 10 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '130px 60px 90px 90px 80px', gap: 8, marginBottom: 10 }}>
+                        <div>
+                          <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: 3 }}>Tipo</label>
+                          <select className="form-select" value={editVals.tipo || 'reps'} onChange={e => setEditVals(v => ({ ...v, tipo: e.target.value }))} style={{ fontSize: '0.8125rem' }}>
+                            <option value="reps">Por reps</option>
+                            <option value="segundos">Por segundos</option>
+                          </select>
+                        </div>
                         <div>
                           <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: 3 }}>Series</label>
                           <input type="number" className="form-input" value={editVals.series} onChange={e => setEditVals(v => ({ ...v, series: e.target.value }))} min={1} />
                         </div>
                         <div>
-                          <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: 3 }}>Reps</label>
-                          <input type="text" className="form-input" value={editVals.repeticiones} onChange={e => setEditVals(v => ({ ...v, repeticiones: e.target.value }))} />
+                          <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: 3 }}>
+                            {editVals.tipo === 'segundos' ? 'Segundos' : 'Reps'}
+                          </label>
+                          {editVals.tipo === 'segundos'
+                            ? <input type="number" className="form-input" value={editVals.segundos || ''} onChange={e => setEditVals(v => ({ ...v, segundos: e.target.value }))} min={1} placeholder="Ej: 30" />
+                            : <input type="text" className="form-input" value={editVals.repeticiones} onChange={e => setEditVals(v => ({ ...v, repeticiones: e.target.value }))} />
+                          }
                         </div>
                         <div>
                           <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: 3 }}>Peso</label>
@@ -719,7 +747,10 @@ function RoutineView({ memberRoutine, onDesasignar, onReemplazar, onRefresh }) {
                       <div>
                         <div style={{ fontWeight: 600, marginBottom: 2 }}>{ex.exercises?.nombre}</div>
                         <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>
-                          {ex.series} series × {ex.repeticiones} reps
+                          {ex.tipo === 'segundos'
+                            ? <>{ex.series} series × <strong style={{ color: 'var(--color-text)' }}>{ex.segundos || ex.repeticiones}</strong> seg</>
+                            : <>{ex.series} series × {ex.repeticiones} reps</>
+                          }
                           {ex.peso && <span> — <strong style={{ color: 'var(--color-text)' }}>{ex.peso}</strong></span>}
                           {ex.descanso_segundos && ` — ${ex.descanso_segundos}s descanso`}
                         </div>
